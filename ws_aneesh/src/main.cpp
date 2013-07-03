@@ -4,10 +4,12 @@
 #include <sstream>
 
 #include "ws_referee/custom.h"
+#include "ws_referee/randomize.h"
 #include <visualization_msgs/Marker.h>
 
-
+int winning = 1;
 std::string _name="Aneesh";
+
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
 
@@ -66,8 +68,14 @@ void post()
   ws_referee::custom msg_out;
   msg_out.winner = "";
   msg_out.sender = _name;
-  msg_out.dist = 0.05;
+  msg_out.dist = get_random_num();
   ROS_INFO("%s will publish a msg\n", _name.c_str());
+
+  if(_posx >= 5)
+  {
+    msg_out.winner = _name;
+    ROS_INFO("\n\n\t\t\033[92m %s WON \033[0m\n\n", _name.c_str());
+  }
 
   player_out_pub.publish(msg_out);
 }
@@ -78,9 +86,16 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
   ROS_INFO("%s Ordered to travel %lf dist", _name.c_str(), msg_in->dist);
 
+  if(msg_in->winner != "")
+  {
+    winning = 0;
+    ROS_INFO("\n\n\t\t\033[92m %s Had a bad day :( \033[0m\n\n", _name.c_str());
+    return;
+  }
+
   run(msg_in->dist);
-  post();
   publish_marker(_posx, _posy);
+  post();
 
 }
 
@@ -89,12 +104,11 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, _name);
 
-  /**
-   * NodeHandle is the main access point to communications with the ROS system.
-   * The first NodeHandle constructed will fully initialize this node, and the last
-   * NodeHandle destructed will close down the node.
-   */
   ros::NodeHandle n;
+
+  //init the randomizer
+  init_randomization_seed();
+
   _posx = 0.;
   _posy = 6.;
 
@@ -107,13 +121,11 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(2);
 
   ROS_INFO("%s node started\n", _name.c_str());
- //int count = 0;
-  while (ros::ok())
+
+  while (winning)
   {
     ros::spinOnce();
     loop_rate.sleep();
-
-    //++count;
   }
 
   return 0;
