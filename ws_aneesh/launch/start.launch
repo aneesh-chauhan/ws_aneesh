@@ -1,7 +1,10 @@
 <?xml version="1.0"?>
 <launch>
+    <arg name="player_in" default="ws_a">
+    <arg name="player_out" default="ws_m">
+
     <node pkg="ws_aneesh" type="ws_aneesh" name="aneesh" output="screen" required="true">
-        <remap from="player_in" to="ws_a"/>
-        <remap from="player_out" to="ws_m"/>
+        <remap from="player_in" to="$(arg player_in)"/>
+        <remap from="player_out" to="$(arg player_out)"/>
     </node>
 </launch>
