@@ -8,20 +8,33 @@
 std::string _name="Aneesh";
 ros::Publisher player_out_pub;
 
+double _posx, _posy;
 
-void player_in_cb(const ws_referee::custom::ConstPtr& msg)
+void run(double dist_in)
 {
-  ROS_INFO("%s Recieved msg", _name.c_str());
-    
+  _posx += dist_in;
+  ROS_INFO("%s current position = %lf", _name.c_str(), _posx);
+}
+
+void post()
+{
+
   ws_referee::custom msg_out;
   msg_out.winner = "";
   msg_out.sender = _name;
-  msg_out.dist = 0.45;
-
+  msg_out.dist = 0.5;
   ROS_INFO("%s will publish a msg\n", _name.c_str());
 
   player_out_pub.publish(msg_out);
+}
 
+
+void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
+{
+  ROS_INFO("%s Ordered to travel %lf dist", _name.c_str(), msg_in->dist);
+
+  run(msg_in->dist);
+  post();
 }
 
 
@@ -35,6 +48,9 @@ int main(int argc, char **argv)
    * NodeHandle destructed will close down the node.
    */
   ros::NodeHandle n;
+  _posx = 0.;
+  _posy = 6.;
+
 
   player_out_pub = n.advertise<ws_referee::custom>("player_out", 1);
   ros::Subscriber sub = n.subscribe("player_in", 1, player_in_cb);
