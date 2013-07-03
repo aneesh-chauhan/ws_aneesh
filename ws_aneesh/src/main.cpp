@@ -62,16 +62,16 @@ void publish_marker(double x, double y)
 }
 
 
-void post()
+void post(std::string winner)
 {
 
   ws_referee::custom msg_out;
-  msg_out.winner = "";
+  msg_out.winner = winner;
   msg_out.sender = _name;
   msg_out.dist = get_random_num();
   ROS_INFO("%s will publish a msg\n", _name.c_str());
 
-  if(_posx >= 5)
+  if(_posx > 5)
   {
     msg_out.winner = _name;
     ROS_INFO("\n\n\t\t\033[92m %s WON \033[0m\n\n", _name.c_str());
@@ -86,16 +86,17 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
   ROS_INFO("%s Ordered to travel %lf dist", _name.c_str(), msg_in->dist);
 
-  if(msg_in->winner != "")
-  {
-    winning = 0;
-    ROS_INFO("\n\n\t\t\033[92m %s Had a bad day :( \033[0m\n\n", _name.c_str());
-    return;
-  }
-
   run(msg_in->dist);
   publish_marker(_posx, _posy);
-  post();
+
+  post(msg_in->winner);
+
+  if(msg_in->winner != "")
+  {
+    ROS_INFO("\n\n\t\t\033[92m %s Had a bad day :( \033[0m\n\n", _name.c_str());
+    winning = 0;
+    return;
+  }
 
 }
 
