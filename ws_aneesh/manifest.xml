@@ -1,0 +1,18 @@
+<package>
+  <description brief="ws_aneesh">
+
+     ws_aneesh
+
+  </description>
+  <author>Aneesh</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/ws_aneesh</url>
+
+  <depend package="std_msgs"/>
+  <depend package="roscpp"/>
+
+
+</package>
+
+

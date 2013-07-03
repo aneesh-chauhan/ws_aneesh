@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+    <node pkg="ws_aneesh" type="ws_aneesh" name="aneesh" output="screen" required="true">
+        <remap from="player_in" to="ws_a"/>
+        <remap from="player_out" to="ws_m"/>
+    </node>
+</launch>
