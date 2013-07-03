@@ -66,7 +66,7 @@ void post()
   ws_referee::custom msg_out;
   msg_out.winner = "";
   msg_out.sender = _name;
-  msg_out.dist = 0.5;
+  msg_out.dist = 0.05;
   ROS_INFO("%s will publish a msg\n", _name.c_str());
 
   player_out_pub.publish(msg_out);
