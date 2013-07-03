@@ -2,24 +2,23 @@
 #include "std_msgs/String.h"
 
 #include <sstream>
+#include "ws_referee/custom.h"
 
 
 std::string _name="Aneesh";
 ros::Publisher player_out_pub;
 
-/* 
-ros::Publisher m_pub = n.advertise<std_msgs::Float32>("player_out", 1);
-*/
 
-
-void player_in_cb(const std_msgs::String::ConstPtr& msg)
+void player_in_cb(const ws_referee::custom::ConstPtr& msg)
 {
-  ROS_INFO("%s heard: [%s]", _name.c_str(), msg->data.c_str());
+  ROS_INFO("%s Recieved msg", _name.c_str());
     
-  std_msgs::String msg_out;
+  ws_referee::custom msg_out;
+  msg_out.winner = "";
+  msg_out.sender = _name;
+  msg_out.dist = 0.45;
 
   ROS_INFO("%s will publish a msg\n", _name.c_str());
-  msg_out.data = "hello world";
 
   player_out_pub.publish(msg_out);
 
@@ -37,7 +36,7 @@ int main(int argc, char **argv)
    */
   ros::NodeHandle n;
 
-  player_out_pub = n.advertise<std_msgs::String>("player_out", 1);
+  player_out_pub = n.advertise<ws_referee::custom>("player_out", 1);
   ros::Subscriber sub = n.subscribe("player_in", 1, player_in_cb);
 
   ros::Rate loop_rate(2);
