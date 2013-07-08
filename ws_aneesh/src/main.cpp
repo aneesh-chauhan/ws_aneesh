@@ -8,12 +8,17 @@
 
 #include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 int winning = 1;
 std::string _name="Aneesh";
 
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
+
+static tf::TransformBroadcaster* br;
+static tf::TransformListener* listener;
+tf::Transform transform;
 
 double _posx, _posy;
 
@@ -26,14 +31,14 @@ void run(double dist_in)
 void publish_marker(double x, double y)
 {
   visualization_msgs::Marker marker;
-  marker.header.frame_id = "world";
+  marker.header.frame_id = "tf_"+_name;
   marker.header.stamp = ros::Time();
   marker.ns = "";
   marker.id = 0;
   marker.type = visualization_msgs::Marker::SPHERE;
   marker.action = visualization_msgs::Marker::ADD;
-  marker.pose.position.x = x;
-  marker.pose.position.y = y;
+  marker.pose.position.x = 0.;
+  marker.pose.position.y = 0.;
   marker.pose.position.z = 0;
   marker.pose.orientation.x = 0.0;
   marker.pose.orientation.y = 0.0;
@@ -56,7 +61,8 @@ void publish_marker(double x, double y)
   marker.color.g = 0.40;
   marker.color.b = 0.9;
 
-  marker.pose.position.x = _posx-0.3;
+  //marker.pose.position.x = _posx-0.3;
+  marker.pose.position.x = -0.3;
   marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
   marker.text = "Aneesh";
   marker_pub.publish(marker);
@@ -92,14 +98,7 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
   publish_marker(_posx, _posy);
 
-//--------
-  static tf::TransformBroadcaster br;
-  tf::Transform transform;
-  transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
-  transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
-  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", _name));
-//--------
-
+  br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", "tf_"+_name));
 
   post(msg_in->winner);
 
@@ -122,12 +121,17 @@ int main(int argc, char **argv)
   //init the randomizer
   init_randomization_seed();
 
-  _posx = 0.;
+  //_posx = 0.;
+  _posx = -5.;
   _posy = 6.;
 
 
   player_out_pub = n.advertise<ws_referee::custom>("player_out", 1);
   marker_pub = n.advertise<visualization_msgs::Marker>("aneesh_marker", 1);
+
+  br = (tf::TransformBroadcaster*) new (tf::TransformBroadcaster); 
+  transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
+  transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
 
   ros::Subscriber sub = n.subscribe("player_in", 1, player_in_cb);
 
