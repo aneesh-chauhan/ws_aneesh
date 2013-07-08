@@ -18,10 +18,12 @@ ros::NodeHandle *n;
 int winning = 1;
 
 std::string _name="aneesh";
-std::string _to_police="paulo";
+std::string _to_police="aneesh";
 
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
+
+ros::ServiceClient *punish_the_client;
 
 static tf::TransformBroadcaster* br;
 static tf::TransformListener* listener;
@@ -110,7 +112,7 @@ void post(std::string winner)
   msg_out.dist = get_random_num();
   ROS_INFO("%s will publish a msg\n", _name.c_str());
 
-  if(_posx > 5)
+  if(transform.getOrigin().x() > 5)
   {
     msg_out.winner = _name;
     ROS_INFO("\n\n\t\t\033[92m %s WON \033[0m\n\n", _name.c_str());
@@ -142,17 +144,16 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
   {
       if(!is_in_field(tf_aux.getOrigin().x(), tf_aux.getOrigin().y()))
       {
-          ros::ServiceClient punish_the_client = n->serviceClient<ws_referee::MovePlayerTo>("move_player"+_to_police);
           ws_referee::MovePlayerTo srv;
           srv.request.new_pos_x = -5.0;
           srv.request.new_pos_y = 0.0;
-          ROS_INFO("aneesh: mike was out, calling service %s", "move_player_paulo");
-          if (punish_the_client.call(srv))
+          ROS_INFO("%s: %s was punished", _name.c_str(), _to_police.c_str());
+          if (punish_the_client->call(srv))
           {
-            ROS_INFO("Response to aneesh: %s", srv.response.reply.c_str());
+            ROS_INFO("Response to %s: %s", _name.c_str(), srv.response.reply.c_str());
           }
           {
-            ROS_INFO("aneesh: service call failed. Now who will police the police?");
+            ROS_INFO("%s: service call failed. Now who will police the police?", _name.c_str());
           }
       }
   }  
@@ -178,7 +179,6 @@ bool srv_moveto_cb(ws_referee::MovePlayerTo::Request &req,
                       ws_referee::MovePlayerTo::Response &res)
 {
 
-  //ROS_INFO("Aneesh ordered to move to (%lf, %lf). %s would you do this? you are a terrible person.", (float)req.new_pos_x + (float)req.new_pos_y, req.player_that_requested.c_str());
   ROS_INFO("Aneesh ordered to move to (%f, %f). %s why would you do this? you are a terrible person.", (float)req.new_pos_x, (float)req.new_pos_y, req.player_that_requested.c_str());
 
   transform.setOrigin( tf::Vector3(req.new_pos_x, req.new_pos_y, 0.0) );
@@ -188,7 +188,6 @@ bool srv_moveto_cb(ws_referee::MovePlayerTo::Request &req,
   res.reply = "Aneesh SMASH!! "+ req.player_that_requested;
   ROS_INFO("%s", res.reply.c_str());
   return true;
-
 }
 
 int main(int argc, char **argv)
@@ -209,6 +208,9 @@ int main(int argc, char **argv)
   marker_pub = n->advertise<visualization_msgs::Marker>("aneesh_marker", 1);
 
   ros::ServiceServer service = n->advertiseService("move_player_"+_name, srv_moveto_cb);
+
+  punish_the_client = (ros::ServiceClient *)new(ros::ServiceClient);
+  *punish_the_client = n->serviceClient<ws_referee::MovePlayerTo>("move_player_"+_to_police);
 
   br = (tf::TransformBroadcaster*) new (tf::TransformBroadcaster); 
   listener = (tf::TransformListener*) new (tf::TransformListener); 
@@ -250,6 +252,9 @@ int main(int argc, char **argv)
   ros::Rate loop_rate(2);
 
   ROS_INFO("%s node started\n", _name.c_str());
+
+  ros::MultiThreadedSpinner spinner(4);
+  spinner.spin();
 
   while (winning)
   {
