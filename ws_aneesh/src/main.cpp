@@ -13,8 +13,12 @@
 #include <tf/transform_listener.h>
 
 
+ros::NodeHandle *n;
+
 int winning = 1;
+
 std::string _name="Aneesh";
+std::string _to_police="mike";
 
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
@@ -121,6 +125,37 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
   ROS_INFO("%s Ordered to travel %lf dist", _name.c_str(), msg_in->dist);
 
+  bool should_police = true;
+
+  tf::StampedTransform tf_aux;
+  try
+  {
+     listener->lookupTransform("world", "tf_"+_to_police,  
+                                  ros::Time(0), tf_aux);
+  }
+
+  catch (tf::TransformException ex){
+         ROS_ERROR("%s",ex.what());
+    should_police = false;
+  }
+  if(should_police)
+  {
+      if(!is_in_field(tf_aux.getOrigin().x(), tf_aux.getOrigin().y()))
+      {
+          ros::ServiceClient punish_the_client = n->serviceClient<ws_referee::MovePlayerTo>("move_player"+_to_police);
+          ws_referee::MovePlayerTo srv;
+          srv.request.new_pos_x = -5.0;
+          srv.request.new_pos_y = 0.0;
+          if (punish_the_client.call(srv))
+          {
+            ROS_INFO("Response to Aneesh: %s", srv.response.reply.c_str());
+          }
+          {
+            ROS_INFO("Who will police the police?");
+          }
+      }
+  }  
+
   run(msg_in->dist);
 
   publish_marker(_posx, _posy);
@@ -159,7 +194,7 @@ int main(int argc, char **argv)
 {
   ros::init(argc, argv, _name);
 
-  ros::NodeHandle n;
+  n = (ros::NodeHandle *) new (ros::NodeHandle);
 
   //init the randomizer
   init_randomization_seed();
@@ -169,10 +204,10 @@ int main(int argc, char **argv)
   _posy = -2.78;
 
 
-  player_out_pub = n.advertise<ws_referee::custom>("player_out", 1);
-  marker_pub = n.advertise<visualization_msgs::Marker>("aneesh_marker", 1);
+  player_out_pub = n->advertise<ws_referee::custom>("player_out", 1);
+  marker_pub = n->advertise<visualization_msgs::Marker>("aneesh_marker", 1);
 
-  ros::ServiceServer service = n.advertiseService("move_aneesh_to", srv_moveto_cb);
+  ros::ServiceServer service = n->advertiseService("move_player_"+_name, srv_moveto_cb);
 
   br = (tf::TransformBroadcaster*) new (tf::TransformBroadcaster); 
   listener = (tf::TransformListener*) new (tf::TransformListener); 
@@ -209,7 +244,7 @@ int main(int argc, char **argv)
   ros::spinOnce();
 
 
-  ros::Subscriber sub = n.subscribe("player_in", 1, player_in_cb);
+  ros::Subscriber sub = n->subscribe("player_in", 1, player_in_cb);
 
   ros::Rate loop_rate(2);
 
