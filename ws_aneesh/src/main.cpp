@@ -5,7 +5,9 @@
 
 #include "ws_referee/custom.h"
 #include "ws_referee/randomize.h"
+
 #include <visualization_msgs/Marker.h>
+#include <tf/transform_broadcaster.h>
 
 int winning = 1;
 std::string _name="Aneesh";
@@ -87,13 +89,23 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
   ROS_INFO("%s Ordered to travel %lf dist", _name.c_str(), msg_in->dist);
 
   run(msg_in->dist);
+
   publish_marker(_posx, _posy);
+
+//--------
+  static tf::TransformBroadcaster br;
+  tf::Transform transform;
+  transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
+  transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+  br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "world", _name));
+//--------
+
 
   post(msg_in->winner);
 
   if(msg_in->winner != "")
   {
-    ROS_INFO("\n\n\t\t\033[92m %s Had a bad day :( \033[0m\n\n", _name.c_str());
+    ROS_INFO("\n\n\t\t\033[92m %s won :( \033[0m\n\n", msg_in->winner.c_str());
     winning = 0;
     return;
   }
