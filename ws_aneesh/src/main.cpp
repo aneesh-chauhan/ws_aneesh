@@ -10,6 +10,7 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
+
 int winning = 1;
 std::string _name="Aneesh";
 
@@ -18,13 +19,37 @@ ros::Publisher marker_pub;
 
 static tf::TransformBroadcaster* br;
 static tf::TransformListener* listener;
+
 tf::Transform transform;
 
 double _posx, _posy;
 
 void run(double dist_in)
 {
-  _posx += dist_in;
+  tf::Transform tf_tmp;
+  tf_tmp.setOrigin( tf::Vector3(dist_in, 0.0, 0.0) );
+
+  double rotation = get_random_deg()*M_PI/180.;
+  tf_tmp.setRotation( tf::Quaternion( 0, 0, rotation, 1) );
+
+  br->sendTransform(tf::StampedTransform(tf_tmp, ros::Time::now(), 
+                                           "tf_"+_name, "tf_tmp_"+_name));
+
+  ros::Duration(0.2).sleep();
+
+  tf::StampedTransform tf_1;
+  try{
+       listener->lookupTransform("world", "tf_tmp_"+_name,  
+                                  ros::Time(0), tf_1);
+     }
+  catch (tf::TransformException ex){
+         ROS_ERROR("%s",ex.what());
+     }
+
+  transform = tf_1;
+  br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), 
+                                          "world", "tf_"+_name));
+
   ROS_INFO("%s current position = %lf", _name.c_str(), _posx);
 }
 
@@ -104,7 +129,7 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
   if(msg_in->winner != "")
   {
-    ROS_INFO("\n\n\t\t\033[92m %s won :( \033[0m\n\n", msg_in->winner.c_str());
+    ROS_INFO("\n\n\t\t\033[92m %s won :) \033[0m\n\n", msg_in->winner.c_str());
     winning = 0;
     return;
   }
@@ -130,8 +155,39 @@ int main(int argc, char **argv)
   marker_pub = n.advertise<visualization_msgs::Marker>("aneesh_marker", 1);
 
   br = (tf::TransformBroadcaster*) new (tf::TransformBroadcaster); 
+  listener = (tf::TransformListener*) new (tf::TransformListener); 
+
+  ros::Time t = ros::Time::now();
+
+  //Send first transform 
   transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
   transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+  br->sendTransform(tf::StampedTransform(transform, t,
+                                           "world", "tf_"+_name));
+
+  tf::Transform tf_tmp;
+  tf_tmp.setOrigin( tf::Vector3(0, 0.0, 0.0) );
+  tf_tmp.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+
+  br->sendTransform(tf::StampedTransform(tf_tmp, t,
+                                           "tf_"+_name, "tf_tmp_"+_name));
+
+  ros::spinOnce();
+  ros::Duration(0.2).sleep();
+
+  //Send first transform 
+  transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
+  transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+  br->sendTransform(tf::StampedTransform(transform, ros::Time::now(), 
+                                           "world", "tf_"+_name));
+
+  tf_tmp.setOrigin( tf::Vector3(0, 0.0, 0.0) );
+  tf_tmp.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+
+  br->sendTransform(tf::StampedTransform(tf_tmp, ros::Time::now(), 
+                                           "tf_"+_name, "tf_tmp_"+_name));
+  ros::spinOnce();
+
 
   ros::Subscriber sub = n.subscribe("player_in", 1, player_in_cb);
 
