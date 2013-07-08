@@ -4,6 +4,8 @@
 #include <sstream>
 
 #include "ws_referee/custom.h"
+#include "ws_referee/MovePlayerTo.h"
+
 #include "ws_referee/randomize.h"
 
 #include <visualization_msgs/Marker.h>
@@ -33,7 +35,7 @@ void run(double dist_in)
   tf_tmp.setRotation( tf::Quaternion( 0, 0, rotation, 1) );
 
   br->sendTransform(tf::StampedTransform(tf_tmp, ros::Time::now(), 
-                                           "tf_"+_name, "tf_tmp_"+_name));
+                                   "tf_"+_name, "tf_tmp_"+_name));
 
   ros::Duration(0.2).sleep();
 
@@ -136,6 +138,22 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
 
 }
 
+bool srv_moveto_cb(ws_referee::MovePlayerTo::Request &req, 
+                      ws_referee::MovePlayerTo::Response &res)
+{
+
+  //ROS_INFO("Aneesh ordered to move to (%lf, %lf). %s would you do this? you are a terrible person.", (float)req.new_pos_x + (float)req.new_pos_y, req.player_that_requested.c_str());
+  ROS_INFO("Aneesh ordered to move to (%f, %f). %s why would you do this? you are a terrible person.", (float)req.new_pos_x, (float)req.new_pos_y, req.player_that_requested.c_str());
+
+  transform.setOrigin( tf::Vector3(req.new_pos_x, req.new_pos_y, 0.0) );
+  transform.setRotation( tf::Quaternion( 0, 0, 0, 1) );
+  br->sendTransform(tf::StampedTransform(transform, ros::Time::now(),
+                                           "world", "tf_"+_name));
+  res.reply = "Aneesh SMASH!! "+ req.player_that_requested;
+  ROS_INFO("%s", res.reply.c_str());
+  return true;
+
+}
 
 int main(int argc, char **argv)
 {
@@ -148,11 +166,13 @@ int main(int argc, char **argv)
 
   //_posx = 0.;
   _posx = -5.;
-  _posy = 6.;
+  _posy = -2.78;
 
 
   player_out_pub = n.advertise<ws_referee::custom>("player_out", 1);
   marker_pub = n.advertise<visualization_msgs::Marker>("aneesh_marker", 1);
+
+  ros::ServiceServer service = n.advertiseService("move_aneesh_to", srv_moveto_cb);
 
   br = (tf::TransformBroadcaster*) new (tf::TransformBroadcaster); 
   listener = (tf::TransformListener*) new (tf::TransformListener); 
