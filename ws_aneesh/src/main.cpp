@@ -18,7 +18,7 @@ ros::NodeHandle *n;
 int winning = 1;
 
 std::string _name="aneesh";
-std::string _to_police="mike";
+std::string _to_police="paulo";
 
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
@@ -133,11 +133,11 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
      listener->lookupTransform("world", "tf_"+_to_police,  
                                   ros::Time(0), tf_aux);
   }
-
   catch (tf::TransformException ex){
          ROS_ERROR("%s",ex.what());
     should_police = false;
   }
+
   if(should_police)
   {
       if(!is_in_field(tf_aux.getOrigin().x(), tf_aux.getOrigin().y()))
@@ -146,12 +146,13 @@ void player_in_cb(const ws_referee::custom::ConstPtr& msg_in)
           ws_referee::MovePlayerTo srv;
           srv.request.new_pos_x = -5.0;
           srv.request.new_pos_y = 0.0;
+          ROS_INFO("aneesh: mike was out, calling service %s", "move_player_paulo");
           if (punish_the_client.call(srv))
           {
-            ROS_INFO("Response to Aneesh: %s", srv.response.reply.c_str());
+            ROS_INFO("Response to aneesh: %s", srv.response.reply.c_str());
           }
           {
-            ROS_INFO("Who will police the police?");
+            ROS_INFO("aneesh: service call failed. Now who will police the police?");
           }
       }
   }  
