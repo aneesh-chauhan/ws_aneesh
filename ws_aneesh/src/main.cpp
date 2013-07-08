@@ -17,7 +17,7 @@ ros::NodeHandle *n;
 
 int winning = 1;
 
-std::string _name="Aneesh";
+std::string _name="aneesh";
 std::string _to_police="mike";
 
 ros::Publisher player_out_pub;
@@ -41,7 +41,7 @@ void run(double dist_in)
   br->sendTransform(tf::StampedTransform(tf_tmp, ros::Time::now(), 
                                    "tf_"+_name, "tf_tmp_"+_name));
 
-  ros::Duration(0.2).sleep();
+  ros::Duration(0.1).sleep();
 
   tf::StampedTransform tf_1;
   try{
@@ -228,7 +228,7 @@ int main(int argc, char **argv)
                                            "tf_"+_name, "tf_tmp_"+_name));
 
   ros::spinOnce();
-  ros::Duration(0.2).sleep();
+  ros::Duration(0.1).sleep();
 
   //Send first transform 
   transform.setOrigin( tf::Vector3(_posx, _posy, 0.0) );
