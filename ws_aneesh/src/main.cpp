@@ -18,7 +18,7 @@ ros::NodeHandle *n;
 int winning = 1;
 
 std::string _name="aneesh";
-std::string _to_police="aneesh";
+std::string _to_police="paulo";
 
 ros::Publisher player_out_pub;
 ros::Publisher marker_pub;
